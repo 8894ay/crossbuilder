@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"go/ast"
 
-	xapiext "github.com/crossplane/crossplane/apis/apiextensions/v1"
+	xapiext "github.com/crossplane/crossplane/v2/apis/apiextensions/v2"
 	"github.com/pkg/errors"
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -160,13 +160,12 @@ func convertCRDToXRD(crd *apiext.CustomResourceDefinition) (*xapiext.CompositeRe
 		Spec: xapiext.CompositeResourceDefinitionSpec{
 			Group: crd.Spec.Group,
 			Names: crd.Spec.Names,
-			//ClaimNames: ,
 			Versions: xrdVersions,
 			// DefaultCompositionRef: ,
 			// EnforcedCompositionRef: ,
-
 		},
 	}
+
 	xrd.SetGroupVersionKind(xapiext.CompositeResourceDefinitionGroupVersionKind)
 	return xrd, nil
 }

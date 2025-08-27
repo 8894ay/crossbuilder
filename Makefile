@@ -54,7 +54,7 @@ LD_FLAGS=-ldflags " \
     "
 .PHONY: build
 build: ## Build the project locally
-	go build $(LD_FLAGS) -o bin/kubebuilder ./cmd
+	go build $(LD_FLAGS) -o bin/xrd-gen ./cmd/xrd-gen/main.go
 
 .PHONY: install
 install: build ## Build and install the binary with the current source code. Use it to test your changes locally.

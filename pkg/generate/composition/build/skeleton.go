@@ -3,15 +3,12 @@ package build
 import (
 	"fmt"
 
-	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
-	"github.com/crossplane/crossplane-runtime/pkg/meta"
-	xapiextv1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
+	"github.com/crossplane/crossplane-runtime/v2/pkg/meta"
+	xapiextv1 "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/mistermx/crossbuilder/pkg/generate/utils"
 )
 
 const (
@@ -58,21 +55,6 @@ type ComposedTemplateSkeleton interface {
 	// WithName sets the name of this composeTemplateSkeleton.
 	WithName(name string) ComposedTemplateSkeleton
 
-	// WithPatches adds the following patches to this composeTemplateSkeleton.
-	WithPatches(patches ...xapiextv1.Patch) ComposedTemplateSkeleton
-
-	// WithUnsafePatches is similar to WithPatches but the field paths of the
-	// composeTemplateSkeletons will not be validated.
-	WithUnsafePatches(patches ...xapiextv1.Patch) ComposedTemplateSkeleton
-
-	// WithConnectionDetails adds the following connection details to this
-	// composeTemplateSkeleton.
-	WithConnectionDetails(connectionDetails ...xapiextv1.ConnectionDetail) ComposedTemplateSkeleton
-
-	// WithReadinessChecks adds the following readiness checks to this
-	// composeTemplateSkeleton.
-	WithReadinessChecks(checks ...xapiextv1.ReadinessCheck) ComposedTemplateSkeleton
-
 	// RegisterAnnotations marks the given resource annotations as safe
 	// so they will be treated as a valid field in patch paths.
 	RegisterAnnotations(annotationKeys ...string) ComposedTemplateSkeleton
@@ -90,13 +72,6 @@ type ComposedTemplateSkeleton interface {
 type CompositionSkeleton interface {
 	// WithName sets the metadata.name of the composition to be built.
 	WithName(name string) CompositionSkeleton
-
-	// NewResource creates a new ComposedTemplateSkeleton with the given base.
-	NewResource(base ObjectKindReference) ComposedTemplateSkeleton
-
-	// WithPublishConnectionDetailsWithStoreConfig sets the
-	// PublishConnectionDetailsWithStoreConfig of this CompositionSkeleton.
-	WithPublishConnectionDetailsWithStoreConfig(ref *xapiextv1.StoreConfigReference) CompositionSkeleton
 
 	// WithWriteConnectionSecretsToNamespace sets the
 	// WriteConnectionSecretsToNamespace of this compositionSkeleton.
@@ -137,8 +112,6 @@ type compositionSkeleton struct {
 
 	registeredPaths                         []string
 	name                                    string
-	composeTemplateSkeletons                []*composeTemplateSkeleton
-	publishConnectionDetailsWithStoreConfig *xapiextv1.StoreConfigReference
 	writeConnectionSecretsToNamespace       *string
 }
 
@@ -175,23 +148,6 @@ func (c *compositionSkeleton) WithName(name string) CompositionSkeleton {
 	return c
 }
 
-// NewResource creates a new composeTemplateSkeleton with the given base.
-func (c *compositionSkeleton) NewResource(base ObjectKindReference) ComposedTemplateSkeleton {
-	res := &composeTemplateSkeleton{
-		base:                base,
-		compositionSkeleton: c,
-	}
-	c.composeTemplateSkeletons = append(c.composeTemplateSkeletons, res)
-	return res
-}
-
-// WithPublishConnectionDetailsWithStoreConfig sets the
-// PublishConnectionDetailsWithStoreConfig of this CompositionSkeleton.
-func (c *compositionSkeleton) WithPublishConnectionDetailsWithStoreConfig(ref *xapiextv1.StoreConfigReference) CompositionSkeleton {
-	c.publishConnectionDetailsWithStoreConfig = ref
-	return c
-}
-
 // WithWriteConnectionSecretsToNamespace sets the
 // WriteConnectionSecretsToNamespace of this compositionSkeleton.
 func (c *compositionSkeleton) WithWriteConnectionSecretsToNamespace(namespace *string) CompositionSkeleton {
@@ -208,21 +164,12 @@ func (c *compositionSkeleton) ToComposition() (xapiextv1.Composition, error) {
 	c.RegisterCompositeAnnotations(KnownCompositeAnnotations...)
 	c.RegisterCompositeLabels(KnownCompositeLabels...)
 
-	composedTemplates := make([]xapiextv1.ComposedTemplate, len(c.composeTemplateSkeletons))
-	for i, c := range c.composeTemplateSkeletons {
-		ct, err := c.ToComposedTemplate()
-		if err != nil {
-			return xapiextv1.Composition{}, errors.Wrapf(err, errFmtBuildComposedTemplate, i)
-		}
-		composedTemplates[i] = ct
-	}
 
 	comp := xapiextv1.Composition{
 		Spec: xapiextv1.CompositionSpec{
 			CompositeTypeRef:                           xapiextv1.TypeReferenceTo(c.composite.GroupVersionKind),
-			Resources:                                  composedTemplates,
+			Mode:                                        xapiextv1.CompositionModePipeline,
 			WriteConnectionSecretsToNamespace:          c.writeConnectionSecretsToNamespace,
-			PublishConnectionDetailsWithStoreConfigRef: c.publishConnectionDetailsWithStoreConfig,
 		},
 	}
 	comp.SetGroupVersionKind(xapiextv1.CompositionGroupVersionKind)
@@ -231,20 +178,12 @@ func (c *compositionSkeleton) ToComposition() (xapiextv1.Composition, error) {
 	return comp, nil
 }
 
-type patchSkeleton struct {
-	patch  xapiextv1.Patch
-	unsafe bool
-}
-
 type composeTemplateSkeleton struct {
 	compositionSkeleton *compositionSkeleton
 
 	registeredPaths   []string
 	name              *string
 	base              ObjectKindReference
-	patches           []patchSkeleton
-	connectionDetails []xapiextv1.ConnectionDetail
-	readinessChecks   []xapiextv1.ReadinessCheck
 }
 
 // RegisterAnnotations marks the given resource annotations as safe
@@ -270,130 +209,6 @@ func (c *composeTemplateSkeleton) RegisterFieldPaths(paths ...string) ComposedTe
 func (c *composeTemplateSkeleton) WithName(name string) ComposedTemplateSkeleton {
 	c.name = &name
 	return c
-}
-
-// WithPatches adds the following patches to this composeTemplateSkeleton.
-func (c *composeTemplateSkeleton) WithPatches(patches ...xapiextv1.Patch) ComposedTemplateSkeleton {
-	for _, patch := range patches {
-		c.patches = append(c.patches, patchSkeleton{
-			patch:  patch,
-			unsafe: false,
-		})
-	}
-	return c
-}
-
-// WithUnsafePatches is similar to WithPatches but the field paths of the
-// composeTemplateSkeletons will not be validated.
-func (c *composeTemplateSkeleton) WithUnsafePatches(patches ...xapiextv1.Patch) ComposedTemplateSkeleton {
-	for _, patch := range patches {
-		c.patches = append(c.patches, patchSkeleton{
-			patch:  patch,
-			unsafe: true,
-		})
-	}
-	return c
-}
-
-// WithConnectionDetails adds the following connection details to this
-// composeTemplateSkeleton.
-func (c *composeTemplateSkeleton) WithConnectionDetails(connectionDetails ...xapiextv1.ConnectionDetail) ComposedTemplateSkeleton {
-	c.connectionDetails = append(c.connectionDetails, connectionDetails...)
-	return c
-}
-
-// WithReadinessChecks adds the following readiness checks to this composeTemplateSkeleton.
-func (c *composeTemplateSkeleton) WithReadinessChecks(checks ...xapiextv1.ReadinessCheck) ComposedTemplateSkeleton {
-	c.readinessChecks = append(c.readinessChecks, checks...)
-	return c
-}
-
-// ToComposedTemplate converts this composeTemplateSkeleton into a ComposedTemplate.
-func (c *composeTemplateSkeleton) ToComposedTemplate() (xapiextv1.ComposedTemplate, error) {
-	registeredCompositePaths, err := parseFieldPaths(c.compositionSkeleton.registeredPaths)
-	if err != nil {
-		return xapiextv1.ComposedTemplate{}, errors.Wrap(err, errParseRegisteredCompositePaths)
-	}
-	registeredPaths, err := parseFieldPaths(c.registeredPaths)
-	if err != nil {
-		return xapiextv1.ComposedTemplate{}, errors.Wrap(err, errParseRegisteredComposedPaths)
-	}
-
-	c.RegisterAnnotations(KnownResourceAnnotations...)
-	c.RegisterLabels(KnownResourceLabels...)
-
-	patches := make([]xapiextv1.Patch, len(c.patches))
-	for i, p := range c.patches {
-		if !p.unsafe {
-			if err := c.validatePatch(p.patch, registeredCompositePaths, registeredPaths); err != nil {
-				return xapiextv1.ComposedTemplate{}, errors.Wrapf(err, errFmtInvalidPatch, i)
-			}
-		}
-		patches[i] = p.patch
-	}
-
-	base := c.base.Object
-	base.SetGroupVersionKind(c.base.GroupVersionKind)
-
-	return xapiextv1.ComposedTemplate{
-		Name: c.name,
-		Base: runtime.RawExtension{
-			Object: base,
-		},
-		Patches:           patches,
-		ConnectionDetails: c.connectionDetails,
-		ReadinessChecks:   c.readinessChecks,
-	}, nil
-}
-
-func (c *composeTemplateSkeleton) validatePatch(patch xapiextv1.Patch, registeredCompositePaths, registeredPaths []fieldpath.Segments) error {
-	patchType := patch.Type
-	if patchType == "" {
-		patchType = xapiextv1.PatchTypeFromCompositeFieldPath
-	}
-
-	switch patchType {
-	case xapiextv1.PatchTypeFromCompositeFieldPath:
-		return validatePatch(patch, c.compositionSkeleton.composite.Object, c.base.Object, registeredCompositePaths, registeredPaths)
-	case xapiextv1.PatchTypeToCompositeFieldPath:
-		return validatePatch(patch, c.base.Object, c.compositionSkeleton.composite.Object, registeredPaths, registeredCompositePaths)
-	case xapiextv1.PatchTypeCombineFromComposite:
-		return validatePatchCombine(patch, c.compositionSkeleton.composite.Object, c.base.Object, registeredCompositePaths, registeredPaths)
-	case xapiextv1.PatchTypeCombineToComposite:
-		return validatePatchCombine(patch, c.base.Object, c.compositionSkeleton.composite.Object, registeredPaths, registeredCompositePaths)
-	case xapiextv1.PatchTypePatchSet:
-		return errors.New("patch types not supported")
-	}
-	return errors.Errorf(errUnknownPatchType, patchType)
-}
-
-func validatePatch(patch xapiextv1.Patch, from, to runtime.Object, fromKnownPaths, toKnownPaths []fieldpath.Segments) error {
-	if err := ValidateFieldPath(from, utils.StringValue(patch.FromFieldPath), fromKnownPaths); err != nil {
-		return errors.Wrap(err, errPatchFromFieldPath)
-	}
-	if err := ValidateFieldPath(to, utils.StringValue(patch.ToFieldPath), toKnownPaths); err != nil {
-		return errors.Wrap(err, errPatchToFieldPath)
-	}
-	return nil
-}
-
-func validatePatchCombine(patch xapiextv1.Patch, from, to runtime.Object, fromKnownPaths, toKnownPaths []fieldpath.Segments) error {
-	if patch.Combine == nil {
-		return errors.Errorf(errPatchRequireField, "combine")
-	}
-	if patch.Combine.Variables == nil {
-		return errors.Errorf(errPatchRequireField, "combine.variables")
-	}
-	if len(patch.Combine.Variables) == 0 {
-		return errors.New(errPatchCombineEmptyVariables)
-	}
-
-	for i, v := range patch.Combine.Variables {
-		if err := ValidateFieldPath(from, v.FromFieldPath, fromKnownPaths); err != nil {
-			return errors.Wrapf(err, errFmtPatchCombineVariableFromFieldPath, i)
-		}
-	}
-	return errors.Wrap(ValidateFieldPath(to, utils.StringValue(patch.ToFieldPath), toKnownPaths), errPatchToFieldPath)
 }
 
 func makeLabelPaths(keys []string) []string {

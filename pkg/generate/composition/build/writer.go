@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	xapiextv1 "github.com/crossplane/crossplane/apis/apiextensions/v1"
+	xapiextv1 "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
 	"sigs.k8s.io/yaml"
 )
 

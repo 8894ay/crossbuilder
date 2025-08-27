@@ -1,8 +1,8 @@
 package markers
 
 import (
-	xpv1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	xapiext "github.com/crossplane/crossplane/apis/apiextensions/v1"
+	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
+	xapiext "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
 	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
@@ -10,7 +10,6 @@ import (
 // XRDMarkers lists all markers that directly modify the XRD (not validation
 // schemas).
 var XRDMarkers = []*definitionWithHelp{
-	must(markers.MakeDefinition("crossbuilder:generate:xrd:claimNames", markers.DescribesType, ClaimNames{})),
 	must(markers.MakeDefinition("crossbuilder:generate:xrd:defaultCompositionRef", markers.DescribesType, DefaultCompositionRef{})),
 	must(markers.MakeDefinition("crossbuilder:generate:xrd:enforcedCompositionRef", markers.DescribesType, EnforcedCompositionRef{})),
 	must(markers.MakeDefinition("crossbuilder:generate:xrd:defaultCompositeDeletePolicy", markers.DescribesType, DefaultCompositeDeletePolicy{})),
