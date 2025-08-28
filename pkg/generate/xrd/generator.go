@@ -160,9 +160,8 @@ func convertCRDToXRD(crd *apiext.CustomResourceDefinition) (*xapiext.CompositeRe
 		Spec: xapiext.CompositeResourceDefinitionSpec{
 			Group: crd.Spec.Group,
 			Names: crd.Spec.Names,
+			Scope: xapiext.CompositeResourceScope(crd.Spec.Scope),
 			Versions: xrdVersions,
-			// DefaultCompositionRef: ,
-			// EnforcedCompositionRef: ,
 		},
 	}
 

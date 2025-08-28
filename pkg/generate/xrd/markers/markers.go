@@ -2,8 +2,7 @@ package markers
 
 import (
 	xpv1 "github.com/crossplane/crossplane-runtime/v2/apis/common/v1"
-	xapiext "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
-	apiext "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	xapiext "github.com/crossplane/crossplane/v2/apis/apiextensions/v2"
 	"sigs.k8s.io/controller-tools/pkg/markers"
 )
 
@@ -18,32 +17,6 @@ var XRDMarkers = []*definitionWithHelp{
 
 func init() {
 	AllDefinitions = append(AllDefinitions, XRDMarkers...)
-}
-
-// +controllertools:marker:generateHelp:category=XRD
-
-// ClaimNames is a marker to specify claim names for generated XRDs.
-type ClaimNames struct {
-	Kind       string   `marker:"kind"`
-	Plural     string   `marker:"plural"`
-	Singular   string   `marker:"singular,optional"`
-	ShortNames []string `marker:"shortNames,optional"`
-	ListKind   string   `marker:"listKind,optional"`
-	Categories []string `marker:"categories,optional"`
-}
-
-// ApplyToXRD applies the claim names to the XRD.
-func (c ClaimNames) ApplyToXRD(xrd *xapiext.CompositeResourceDefinition, version string) error {
-	xrd.Spec.ClaimNames = &apiext.CustomResourceDefinitionNames{
-		Kind:       c.Kind,
-		Plural:     c.Plural,
-		Singular:   c.Singular,
-		ShortNames: c.ShortNames,
-		ListKind:   c.ListKind,
-		Categories: c.Categories,
-	}
-	// test(c)
-	return nil
 }
 
 // +controllertools:marker:generateHelp:category=XRD
