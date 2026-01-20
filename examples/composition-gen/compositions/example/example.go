@@ -1,8 +1,10 @@
 package example
 
 import (
-	"github.com/mistermx/crossbuilder/examples/xrd-gen/apis/v1alpha1"
-	"github.com/mistermx/crossbuilder/pkg/generate/composition/build"
+	"github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
+	"github.com/mistermx/crossbuilder/v2/examples/xrd-gen/apis/v1alpha1"
+	"github.com/mistermx/crossbuilder/v2/pkg/generate/composition/build"
+	"k8s.io/utils/ptr"
 )
 
 type ExampleBuilder struct{}
@@ -15,47 +17,14 @@ func (b *ExampleBuilder) GetCompositeTypeRef() build.ObjectKindReference {
 }
 
 func (b *ExampleBuilder) Build(c build.CompositionSkeleton) {
-	c.WithName("example")
-
-	// c.
-	// 	NewResource(build.ObjectKindReference{
-	// 		GroupVersionKind: rbacv1.SchemeGroupVersion.WithKind(reflect.TypeOf(rbacv1.ClusterRole{}).Name()),
-	// 		Object: &rbacv1.ClusterRole{
-	// 			Rules: []rbacv1.PolicyRule{
-	// 				{
-	// 					Verbs:     []string{"GET"},
-	// 					APIGroups: []string{"v1"},
-	// 					Resources: []string{""}, // patched
-	// 				},
-	// 				{
-	// 					Verbs:         []string{"GET"},
-	// 					APIGroups:     []string{"v1"},
-	// 					ResourceNames: []string{""}, // patched
-	// 				},
-	// 			},
-	// 		},
-	// 	}).
-	// 	RegisterLabels(
-	// 		"crossplane.io/claim-namespace",
-	// 		"crossplane.io/claim-name",
-	// 	).
-	// 	WithName("cluster-role").
-	// 	WithPatches(
-	// 		simplePatch(
-	// 			"spec.parameters.exampleField",
-	// 			"rules[0].resources[0]",
-	// 		),
-	// 		simplePatch(
-	// 			"spec.providerConfigRef.name",
-	// 			"rules[1].resourceNames[0]",
-	// 		),
-	// 		simplePatch(
-	// 			"metadata.labels[crossplane.io/claim-namespace]",
-	// 			"metadata.labels[crossplane.io/claim-namespace]",
-	// 		),
-	// 		simplePatch(
-	// 			"metadata.labels[crossplane.io/claim-name]",
-	// 			"metadata.labels[crossplane.io/claim-name]",
-	// 		),
-	// 	)
+	c.
+		WithName("cluster-role").
+		WithWriteConnectionSecretsToNamespace(ptr.To("example-namespace")).
+		WithPipelineSteps(
+			v1.PipelineStep{
+				Step: "example-step",
+				FunctionRef: v1.FunctionReference{
+					Name: "example-function",
+				},
+		})
 }

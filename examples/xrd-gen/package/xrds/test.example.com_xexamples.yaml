@@ -4,9 +4,15 @@ kind: CompositeResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: (devel)
-  creationTimestamp: null
   name: xexamples.test.example.com
 spec:
+  connectionSecretKeys:
+  - username
+  - password
+  defaultCompositionRef:
+    name: example-composition
+  enforcedCompositionRef:
+    name: example-composition-2
   group: test.example.com
   names:
     categories:
@@ -15,6 +21,7 @@ spec:
     listKind: XExampleList
     plural: xexamples
     singular: xexample
+  scope: Namespaced
   versions:
   - name: v1alpha1
     referenceable: true
