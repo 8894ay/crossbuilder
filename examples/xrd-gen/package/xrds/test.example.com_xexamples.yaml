@@ -6,14 +6,17 @@ metadata:
     controller-gen.kubebuilder.io/version: (devel)
   name: xexamples.test.example.com
 spec:
-  connectionSecretKeys:
-  - username
-  - password
   defaultCompositionRef:
     name: example-composition
+  defaultCompositionUpdatePolicy: Automatic
   enforcedCompositionRef:
     name: example-composition-2
   group: test.example.com
+  metadata:
+    annotations:
+      example-annotation: example-value
+    labels:
+      example-label: example-value
   names:
     categories:
     - crossplane
