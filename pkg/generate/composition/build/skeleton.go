@@ -1,8 +1,6 @@
 package build
 
 import (
-	"fmt"
-
 	xapiextv1 "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
 	"github.com/pkg/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,20 +9,7 @@ import (
 )
 
 const (
-	errEmptyCompositionname                 = "composition name must not be empty"
-	errFmtBuildComposedTemplate             = "cannot build composed template at index %d"
-	errFmtInvalidPatch                      = "invalid patch at index %d"
-	errPatchFromFieldPath                   = "fromFieldPath is invalid"
-	errPatchToFieldPath                     = "toFieldPath is invalid"
-	errPatchRequireField                    = "missing field %s"
-	errPatchCombineEmptyVariables           = "no variables given"
-	errFmtPatchCombineVariableFromFieldPath = "fromFieldPath of variable at index %d is invalid"
-	errUnknownPatchType                     = "unknown patch type %s"
-	errParseRegisteredCompositePaths        = "cannot parse registered composite paths"
-	errParseRegisteredComposedPaths         = "cannot parse registered composed paths"
-
-	labelKeyClaimName      = "crossplane.io/claim-name"
-	labelKeyClaimNamespace = "crossplane.io/claim-namespace"
+	errEmptyCompositionname = "composition name must not be empty"
 )
 
 // CompositionSkeleton represents the build time state of a composition.
@@ -102,20 +87,4 @@ func (c *compositionSkeleton) ToComposition() (xapiextv1.Composition, error) {
 	comp.SetCreationTimestamp(v1.Time{})
 	comp.Spec.Pipeline = c.pipelineSteps
 	return comp, nil
-}
-
-func makeLabelPaths(keys []string) []string {
-	paths := make([]string, len(keys))
-	for i, k := range keys {
-		paths[i] = fmt.Sprintf("metadata.labels[%s]", k)
-	}
-	return paths
-}
-
-func makeAnnotationPaths(keys []string) []string {
-	paths := make([]string, len(keys))
-	for i, k := range keys {
-		paths[i] = fmt.Sprintf("metadata.annotations[%s]", k)
-	}
-	return paths
 }
