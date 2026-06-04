@@ -43,8 +43,8 @@ type ObjectKindReference struct {
 }
 
 type compositionSkeleton struct {
-	composite 								         ObjectKindReference
-	name                               string
+	composite                         ObjectKindReference
+	name                              string
 	writeConnectionSecretsToNamespace *string
 	pipelineSteps                     []xapiextv1.PipelineStep
 }

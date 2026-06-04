@@ -58,24 +58,24 @@ func (c EnforcedCompositionRef) ApplyToXRD(xrd *xapiext.CompositeResourceDefinit
 
 // +controllertools:marker:generateHelp:category=XRD
 
-// DefaultCompositionUpdatePolicy is the policy used when updating composites 
-// after a new Composition Revision has been created if no policy has been 
+// DefaultCompositionUpdatePolicy is the policy used when updating composites
+// after a new Composition Revision has been created if no policy has been
 // specified on the composite.
 type DefaultCompositionUpdatePolicy string
 
 func (p DefaultCompositionUpdatePolicy) ApplyToXRD(xrd *xapiext.CompositeResourceDefinition, version string) error {
 	policy := xpv1.UpdatePolicy(p)
-	
+
 	// Validate that the policy is a valid UpdatePolicy enum value
 	policies := []xpv1.UpdatePolicy{
 		xpv1.UpdateAutomatic,
 		xpv1.UpdateManual,
 	}
-	
+
 	if !slices.Contains(policies, policy) {
 		return fmt.Errorf("invalid DefaultCompositionUpdatePolicy: %q", p)
 	}
-	
+
 	xrd.Spec.DefaultCompositionUpdatePolicy = &policy
 	return nil
 }

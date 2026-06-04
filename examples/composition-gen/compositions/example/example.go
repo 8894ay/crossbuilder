@@ -1,10 +1,11 @@
 package example
 
 import (
-	"github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
+	v1 "github.com/crossplane/crossplane/v2/apis/apiextensions/v1"
+	"k8s.io/utils/ptr"
+
 	"github.com/mistermx/crossbuilder/v2/examples/xrd-gen/apis/v1alpha1"
 	"github.com/mistermx/crossbuilder/v2/pkg/generate/composition/build"
-	"k8s.io/utils/ptr"
 )
 
 type ExampleBuilder struct{}
@@ -26,5 +27,5 @@ func (b *ExampleBuilder) Build(c build.CompositionSkeleton) {
 				FunctionRef: v1.FunctionReference{
 					Name: "example-function",
 				},
-		})
+			})
 }

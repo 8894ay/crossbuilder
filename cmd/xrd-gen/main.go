@@ -191,7 +191,10 @@ func main() { // nolint:gocyclo
 		if helpLevel == 0 {
 			helpLevel = summaryHelp
 		}
-		fmt.Fprintf(c.OutOrStderr(), "\n\nOptions\n\n")
+		_, err := fmt.Fprintf(c.OutOrStderr(), "\n\nOptions\n\n")
+		if err != nil {
+			return err
+		}
 		return helpForLevels(c.OutOrStdout(), c.OutOrStderr(), helpLevel, optionsRegistry, help.SortByOption)
 	})
 
@@ -202,7 +205,10 @@ func main() { // nolint:gocyclo
 				panic(err)
 			}
 		}
-		fmt.Fprintf(cmd.OutOrStderr(), "run `%[1]s %[2]s -w` to see all available markers, or `%[1]s %[2]s -h` for usage\n", cmd.CalledAs(), strings.Join(os.Args[1:], " "))
+		_, err := fmt.Fprintf(cmd.OutOrStderr(), "run `%[1]s %[2]s -w` to see all available markers, or `%[1]s %[2]s -h` for usage\n", cmd.CalledAs(), strings.Join(os.Args[1:], " "))
+		if err != nil {
+			panic(err)
+		}
 		os.Exit(1)
 	}
 }
